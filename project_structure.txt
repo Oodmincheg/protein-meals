@@ -1,0 +1,33 @@
+We'll use FastAPI + SQLAlchemy + PostgreSQL (assuming you're using Python backend). Here's a recommended layout:
+
+bash
+Copy
+Edit
+protein_meals_project/
+├── app/
+│   ├── __init__.py
+│   ├── main.py                # Entry point of FastAPI app
+│   ├── models/                # SQLAlchemy models
+│   │   ├── __init__.py
+│   │   ├── meal.py
+│   │   ├── ingredient.py
+│   │   ├── meal_ingredient.py
+│   │   ├── allergen.py
+│   │   └── ingredient_allergen.py
+│   ├── schemas/               # Pydantic schemas
+│   │   ├── __init__.py
+│   │   ├── meal.py
+│   │   ├── ingredient.py
+│   │   ├── allergen.py
+│   │   └── ...
+│   ├── crud/                  # CRUD operations
+│   │   ├── __init__.py
+│   │   ├── meal.py
+│   │   ├── ingredient.py
+│   │   └── ...
+│   ├── database.py            # DB session + engine
+│   └── utils.py               # Optional: helpers, seeders
+├── scripts/                   # One-time or utility scripts
+│   └── populate_ingredients.py
+├── requirements.txt
+└── README.md
