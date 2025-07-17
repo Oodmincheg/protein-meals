@@ -3,6 +3,7 @@ from sqlalchemy import func, cast, Numeric
 from app.models.meal import Meal
 from app.models.ingredient import Ingredient
 from app.models.meal_ingredient import MealIngredient
+from app.schemas.meal import MealCreate, MealUpdate
 
 def get_meal_summaries(db: Session):
     return (
@@ -41,3 +42,35 @@ def get_meal_summaries(db: Session):
         .order_by(Meal.id)
         .all()
     )
+
+
+def get_meal(db: Session, meal_id: int):
+    return db.query(Meal).filter(Meal.id == meal_id).first()
+
+def get_all_meals(db: Session):
+    return db.query(Meal).order_by(Meal.id).all()
+
+def create_meal(db: Session, meal: MealCreate):
+    db_meal = Meal(**meal.dict())
+    db.add(db_meal)
+    db.commit()
+    db.refresh(db_meal)
+    return db_meal
+
+def update_meal(db: Session, meal_id: int, update: MealUpdate):
+    db_meal = get_meal(db, meal_id)
+    if not db_meal:
+        return None
+    for field, value in update.dict().items():
+        setattr(db_meal, field, value)
+    db.commit()
+    db.refresh(db_meal)
+    return db_meal
+
+def delete_meal(db: Session, meal_id: int):
+    db_meal = get_meal(db, meal_id)
+    if not db_meal:
+        return None
+    db.delete(db_meal)
+    db.commit()
+    return db_meal

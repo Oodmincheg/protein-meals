@@ -1,0 +1,10 @@
+<h2>Edit Ingredient</h2>
+<form method="post">
+  <input type="text" name="name" value="{{ ingredient.name }}" required><br>
+  <input type="number" step="0.1" name="calories" value="{{ ingredient.calories }}" required><br>
+  <input type="number" step="0.1" name="protein" value="{{ ingredient.protein }}" required><br>
+  <input type="number" step="0.1" name="fat" value="{{ ingredient.fat }}" required><br>
+  <input type="number" step="0.1" name="carbs" value="{{ ingredient.carbs }}" required><br>
+  <button type="submit">Update</button>
+</form>
+<a href="/ingredients">Cancel</a>
