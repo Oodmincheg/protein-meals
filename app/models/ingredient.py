@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy.orm import relationship
 from app.database import Base
+from app.models.meal_ingredient import MealIngredient
 
 class Ingredient(Base):
     __tablename__ = "ingredient"
@@ -10,3 +12,9 @@ class Ingredient(Base):
     protein = Column(Float, nullable=False)
     fat = Column(Float, nullable=False)
     carbs = Column(Float, nullable=False)
+
+    meals = relationship(
+        "Meal",
+        secondary=MealIngredient,
+        back_populates="ingredients"
+    )

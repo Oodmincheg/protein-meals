@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi import APIRouter, Depends, Request, HTTPException, Query
 from fastapi.responses import HTMLResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func
 from typing import List
 
 from app.database import get_db
@@ -8,8 +9,10 @@ from app.crud.meal import get_meal_summaries
 from app.schemas.meal import MealSummary
 from fastapi.templating import Jinja2Templates
 
-from app.schemas.meal import MealCreate, MealUpdate, MealOut
+from app.schemas.meal import MealCreate, MealUpdate, MealOut, MealWithIngredients
 from app.crud import meal as crud
+from app.models.meal import Meal
+from app.models.ingredient import Ingredient
 
 router = APIRouter(prefix="/meals", tags=["meals"])
 
@@ -28,6 +31,18 @@ def read_meal_summaries_html(request: Request, db: Session = Depends(get_db)):
     results = get_meal_summaries(db)
     meals = [dict(row._mapping) for row in results]
     return templates.TemplateResponse("meals.html", {"request": request, "meals": meals})
+
+@router.get("/filter-by-ingredient", response_model=List[MealWithIngredients])
+def filter_meals_by_ingredient(ingredient_name: str, db: Session = Depends(get_db)):
+    meals = (
+        db.query(Meal)
+        .join(Meal.ingredients)
+        .filter(func.lower(Ingredient.name).like(f"%{ingredient_name.lower()}%"))
+        .options(joinedload(Meal.ingredients))  # eager-load ingredients
+        .distinct()
+        .all()
+    )
+    return meals
 
 
 @router.post("/", response_model=MealOut)

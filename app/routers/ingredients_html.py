@@ -11,7 +11,6 @@ router = APIRouter()
 
 @router.get("/create-ingredient", response_class=HTMLResponse)
 def new_ingredient_form(request: Request):
-    print("✅ GET /create-ingredient HIT!")
     return templates.TemplateResponse("ingredients/add.html", {"request": request})
 
 @router.post("/create-ingredient")
@@ -24,7 +23,6 @@ def create_ingredient_from_form(
     carbs: float = Form(...),
     db: Session = Depends(get_db)
 ):
-    print("✅ POST /create-ingredient hit")
     ingredient_data = IngredientCreate(
         name=name,
         calories=calories,

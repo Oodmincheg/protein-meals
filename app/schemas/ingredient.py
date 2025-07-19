@@ -13,8 +13,13 @@ class IngredientCreate(IngredientBase):
 class IngredientUpdate(IngredientBase):
     pass
 
-class IngredientOut(IngredientBase):
+class IngredientOut(BaseModel):
     id: int
+    name: str
+    protein: float
+    fat: float
+    carbs: float
+    allergens: str | None = None
 
     class Config:
         from_attributes = True
