@@ -25,13 +25,12 @@ git clone https://github.com/Oodmincheg/protein-meals
 
 2. Create a virtual environment:
 python3 -m venv venv
-
 source venv/bin/activate
 
-4. Install dependencies:
+3. Install dependencies:
 pip install -r requirements.txt
 
-5. Set up PostgreSQL database:
+4. Set up PostgreSQL database:
 Ubuntu / Debian :
 sudo apt update
 sudo apt install postgresql-client
@@ -40,19 +39,19 @@ macOS (with Homebrew)
 brew install libpq
 brew link --force libpq
 
-Create a database named protein_db and a user admin:
+5. Create a database named protein_db and a user admin:
 sudo -u postgres psql
 CREATE DATABASE protein_db;
 CREATE USER admin WITH PASSWORD 'admin';
 GRANT ALL PRIVILEGES ON DATABASE protein_db TO admin;
 
-5. Run alembic migrations:
+6. Run alembic migrations:
 alembic upgrade head
 
-6. Populate the database:
+7. Populate the database:
 python scripts/seed.py
 
-7. Start the development server:
+8. Start the development server:
 uvicorn app.main:app --reload
 
 Server will be avalable at http://localhost:8000
