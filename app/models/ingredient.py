@@ -13,8 +13,4 @@ class Ingredient(Base):
     fat = Column(Float, nullable=False)
     carbs = Column(Float, nullable=False)
 
-    meals = relationship(
-        "Meal",
-        secondary=MealIngredient,
-        back_populates="ingredients"
-    )
+    meal_links = relationship("MealIngredient", back_populates="ingredient", cascade="all, delete-orphan")

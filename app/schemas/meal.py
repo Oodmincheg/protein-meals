@@ -16,10 +16,18 @@ class MealBase(BaseModel):
     name: str
 
 class MealCreate(MealBase):
-    pass
+    calories: float
+    protein: float
+    fat: float
+    carbs: float
+
 
 class MealUpdate(MealBase):
-    pass
+    calories: float
+    protein: float
+    fat: float
+    carbs: float
+
 
 class MealOut(MealBase):
     id: int

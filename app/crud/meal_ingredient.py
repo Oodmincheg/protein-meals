@@ -2,33 +2,29 @@ from sqlalchemy.orm import Session
 from app.models.meal_ingredient import MealIngredient
 from app.schemas.meal_ingredient import MealIngredientCreate, MealIngredientUpdate
 
-def get_meal_ingredient(db: Session, mi_id: int):
-    return db.query(MealIngredient).filter(MealIngredient.id == mi_id).first()
-
-def get_all_meal_ingredients(db: Session):
-    return db.query(MealIngredient).order_by(MealIngredient.id).all()
-
-def create_meal_ingredient(db: Session, data: MealIngredientCreate):
-    db_item = MealIngredient(**data.dict())
-    db.add(db_item)
+def add_meal_ingredient(db: Session, data: MealIngredientCreate):
+    link = MealIngredient(**data.dict())
+    db.add(link)
     db.commit()
-    db.refresh(db_item)
-    return db_item
+    db.refresh(link)
+    return link
 
-def update_meal_ingredient(db: Session, mi_id: int, data: MealIngredientUpdate):
-    db_item = get_meal_ingredient(db, mi_id)
-    if not db_item:
+def get_meal_ingredient(db: Session, meal_id: int, ingredient_id: int):
+    return db.query(MealIngredient).filter_by(meal_id=meal_id, ingredient_id=ingredient_id).first()
+
+def update_meal_ingredient(db: Session, meal_id: int, ingredient_id: int, data: MealIngredientUpdate):
+    link = get_meal_ingredient(db, meal_id, ingredient_id)
+    if not link:
         return None
-    for key, value in data.dict().items():
-        setattr(db_item, key, value)
+    link.amount_grams = data.amount_grams
     db.commit()
-    db.refresh(db_item)
-    return db_item
+    db.refresh(link)
+    return link
 
-def delete_meal_ingredient(db: Session, mi_id: int):
-    db_item = get_meal_ingredient(db, mi_id)
-    if not db_item:
+def delete_meal_ingredient(db: Session, meal_id: int, ingredient_id: int):
+    link = get_meal_ingredient(db, meal_id, ingredient_id)
+    if not link:
         return None
-    db.delete(db_item)
+    db.delete(link)
     db.commit()
-    return db_item
+    return link
