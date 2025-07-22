@@ -42,10 +42,7 @@ brew link --force libpq
 5. Launch shell script from root of the project, that will create fresh alembic migration and populate database with some ingredients and meals
 scripts/reset.sh
 
-7. Populate the database:
-python scripts/seed.py
-
-8. Start the development server:
+6. Start the development server:
 uvicorn app.main:app --reload
 
 Server will be avalable at http://localhost:8000
