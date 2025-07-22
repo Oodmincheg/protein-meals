@@ -39,14 +39,8 @@ macOS (with Homebrew)
 brew install libpq
 brew link --force libpq
 
-5. Create a database named protein_db and a user admin:
-sudo -u postgres psql
-CREATE DATABASE protein_db;
-CREATE USER admin WITH PASSWORD 'admin';
-GRANT ALL PRIVILEGES ON DATABASE protein_db TO admin;
-
-6. Run alembic migrations:
-alembic upgrade head
+5. Launch shell script from root of the project, that will create fresh alembic migration and populate database with some ingredients and meals
+scripts/reset.sh
 
 7. Populate the database:
 python scripts/seed.py
