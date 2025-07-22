@@ -25,12 +25,13 @@ git clone https://github.com/Oodmincheg/protein-meals
 
 2. Create a virtual environment:
 python3 -m venv venv
+
 source venv/bin/activate
 
-3. Install dependencies:
+4. Install dependencies:
 pip install -r requirements.txt
 
-4. Set up PostgreSQL database:
+5. Set up PostgreSQL database:
 Ubuntu / Debian :
 sudo apt update
 sudo apt install postgresql-client
