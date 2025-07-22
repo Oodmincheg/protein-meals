@@ -2,18 +2,19 @@ from pydantic import BaseModel
 from typing import Optional
 
 class MealIngredientBase(BaseModel):
-    meal_id: int
     ingredient_id: int
     amount_grams: float
 
 class MealIngredientCreate(MealIngredientBase):
-    pass
+    meal_id: int
 
-class MealIngredientUpdate(MealIngredientBase):
-    pass
+class MealIngredientUpdate(BaseModel):
+    amount_grams: float
 
-class MealIngredientOut(MealIngredientBase):
-    id: int
+class MealIngredientOut(BaseModel):
+    meal_id: int
+    ingredient_id: int
+    amount_grams: float
 
     class Config:
         from_attributes = True

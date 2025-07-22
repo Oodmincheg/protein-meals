@@ -1,38 +1,90 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Request, Form, HTTPException
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
-from typing import List
-
+from sqlalchemy import select, insert, delete, update
 from app.database import get_db
-from app.schemas.meal_ingredient import MealIngredientCreate, MealIngredientUpdate, MealIngredientOut
-from app.crud import meal_ingredient as crud
+from app.models.meal import Meal
+from app.models.ingredient import Ingredient
+from app.models.meal_ingredient import MealIngredient
+from fastapi.templating import Jinja2Templates
+from starlette.status import HTTP_303_SEE_OTHER
 
-router = APIRouter(prefix="/meal-ingredients", tags=["meal_ingredients"])
+router = APIRouter(prefix="/meal-ingredients", tags=["meal-ingredients"])
+templates = Jinja2Templates(directory="app/templates")
 
-@router.post("/", response_model=MealIngredientOut)
-def create_mi(mi: MealIngredientCreate, db: Session = Depends(get_db)):
-    return crud.create_meal_ingredient(db, mi)
+@router.get("/", response_class=HTMLResponse)
+def list_meal_ingredients(request: Request, db: Session = Depends(get_db)):
+    results = (
+        db.query(MealIngredient, Meal.name.label("meal_name"), Ingredient.name.label("ingredient_name"))
+        .join(Meal, Meal.id == MealIngredient.meal_id)
+        .join(Ingredient, Ingredient.id == MealIngredient.ingredient_id)
+        .all()
+    )
+    return templates.TemplateResponse("meal_ingredients/list.html", {"request": request, "meal_ingredients": results})
 
-@router.get("/", response_model=List[MealIngredientOut])
-def read_all_mi(db: Session = Depends(get_db)):
-    return crud.get_all_meal_ingredients(db)
+@router.get("/add", response_class=HTMLResponse)
+def add_meal_ingredient_form(request: Request, db: Session = Depends(get_db)):
+    meals = db.query(Meal).all()
+    ingredients = db.query(Ingredient).all()
+    return templates.TemplateResponse("meal_ingredients/add.html", {
+        "request": request,
+        "meals": meals,
+        "ingredients": ingredients
+    })
 
-@router.get("/{mi_id}", response_model=MealIngredientOut)
-def read_single_mi(mi_id: int, db: Session = Depends(get_db)):
-    result = crud.get_meal_ingredient(db, mi_id)
+@router.post("/create")
+def create_meal_ingredient(
+    meal_id: int = Form(...),
+    ingredient_id: int = Form(...),
+    amount_grams: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    stmt = insert(MealIngredient).values(meal_id=meal_id, ingredient_id=ingredient_id, amount_grams=amount_grams)
+    db.execute(stmt)
+    db.commit()
+    return RedirectResponse("/meal-ingredients", status_code=HTTP_303_SEE_OTHER)
+
+@router.get("/edit/{meal_id}/{ingredient_id}", response_class=HTMLResponse)
+def edit_meal_ingredient_form(meal_id: int, ingredient_id: int, request: Request, db: Session = Depends(get_db)):
+    result = db.execute(
+        select(MealIngredient.amount_grams)
+        .where(MealIngredient.meal_id == meal_id)
+        .where(MealIngredient.ingredient_id == ingredient_id)
+    ).fetchone()
     if not result:
-        raise HTTPException(status_code=404, detail="Meal ingredient not found")
-    return result
+        raise HTTPException(status_code=404, detail="MealIngredient not found")
 
-@router.put("/{mi_id}", response_model=MealIngredientOut)
-def update_mi(mi_id: int, mi: MealIngredientUpdate, db: Session = Depends(get_db)):
-    result = crud.update_meal_ingredient(db, mi_id, mi)
-    if not result:
-        raise HTTPException(status_code=404, detail="Meal ingredient not found")
-    return result
+    return templates.TemplateResponse("meal_ingredients/edit.html", {
+        "request": request,
+        "meal_id": meal_id,
+        "ingredient_id": ingredient_id,
+        "grams": result[0]
+    })
 
-@router.delete("/{mi_id}", response_model=MealIngredientOut)
-def delete_mi(mi_id: int, db: Session = Depends(get_db)):
-    result = crud.delete_meal_ingredient(db, mi_id)
-    if not result:
-        raise HTTPException(status_code=404, detail="Meal ingredient not found")
-    return result
+@router.post("/update/{meal_id}/{ingredient_id}")
+def update_meal_ingredient(
+    meal_id: int,
+    ingredient_id: int,
+    grams: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    stmt = (
+        update(MealIngredient)
+        .where(MealIngredient.meal_id == meal_id)
+        .where(MealIngredient.ingredient_id == ingredient_id)
+        .values(amount_grams=grams)
+    )
+    db.execute(stmt)
+    db.commit()
+    return RedirectResponse("/meal-ingredients", status_code=HTTP_303_SEE_OTHER)
+
+@router.post("/delete/{meal_id}/{ingredient_id}")
+def delete_meal_ingredient(meal_id: int, ingredient_id: int, db: Session = Depends(get_db)):
+    stmt = (
+        delete(MealIngredient)
+        .where(MealIngredient.meal_id == meal_id)
+        .where(MealIngredient.ingredient_id == ingredient_id)
+    )
+    db.execute(stmt)
+    db.commit()
+    return RedirectResponse("/meal-ingredients", status_code=HTTP_303_SEE_OTHER)

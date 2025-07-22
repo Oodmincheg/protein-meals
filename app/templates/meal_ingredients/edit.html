@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Edit Meal-Ingredient Link</h2>
+<form method="post" action="/meal-ingredients/update/{{ meal_id }}/{{ ingredient_id }}">
+  <label>Grams:</label>
+  <input type="number" name="grams" value="{{ grams }}" required />
+  <button type="submit">Update</button>
+</form>
+{% endblock %}
