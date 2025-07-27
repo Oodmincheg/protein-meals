@@ -50,3 +50,6 @@ FastAPI endpoints (for CRUD and filters testing) will be avalable at http://loca
 
 Visit /ingredients to add or edit ingredients.
 /meals to create a meal and assign its macros.
+
+Current tables schema available at:
+https://drive.google.com/file/d/1V73ESHTqTT9KAHH2P6lI_PCqk2xPxzRs/view
