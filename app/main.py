@@ -1,8 +1,7 @@
 from fastapi import FastAPI
-from app.routers import meal_ingredient, meals, ingredients, ingredients_html
+from app.routers import meal_ingredient, meals, ingredients
 from fastapi.staticfiles import StaticFiles
 
-from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 
 app = FastAPI()
@@ -10,7 +9,6 @@ app = FastAPI()
 app.include_router(meals.router)
 app.include_router(ingredients.router)
 app.include_router(meal_ingredient.router)
-app.include_router(ingredients_html.router)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
