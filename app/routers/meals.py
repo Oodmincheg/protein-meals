@@ -15,7 +15,6 @@ from app.models.meal_ingredient import MealIngredient
 from fastapi.templating import Jinja2Templates
 
 router = APIRouter(prefix="/meals", tags=["meals"])
-templates = Jinja2Templates(directory="app/templates")
 
 # JSON API endpoints
 @router.get("/summary", response_model=List[MealSummary])
