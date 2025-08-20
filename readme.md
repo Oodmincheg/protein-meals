@@ -5,7 +5,6 @@ forms.
 Current features of project are:
 CRUD operations for ingredient, meals, meal-ingredient (many-to-many relation)
 Filter ingredients by nutrients.
-HTML forms and list views via Jinja2 templates.
 Database migration with Alembic.
 Data population scripts.
 Built with FastAPI and SQLAlchemy.
@@ -16,7 +15,6 @@ Tech stack:
 - SQLAlchemy
 - PostgreSQL
 - Alembic
-- Jinja2 (HTML templates)
 - Uvicorn (dev server)
 
 Setup instructions
