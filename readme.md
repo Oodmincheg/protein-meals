@@ -51,3 +51,8 @@ Visit /ingredients to add or edit ingredients.
 
 Current tables schema available at:
 https://drive.google.com/file/d/1V73ESHTqTT9KAHH2P6lI_PCqk2xPxzRs/view
+
+7. Our team use ruff linter for formatting and bug prevention. You can install it via python package installer:
+pip install ruff
+or if you are Homebrew user:
+brew install ruff
