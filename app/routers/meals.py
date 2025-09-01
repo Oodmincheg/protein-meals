@@ -1,9 +1,7 @@
-from fastapi import APIRouter, Depends, Request, Form, HTTPException, Query
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, insert
+from sqlalchemy import func
 from typing import List
-from starlette.status import HTTP_303_SEE_OTHER
 
 from app.database import get_db
 from app.crud.meal import get_meal_summaries
@@ -12,7 +10,7 @@ from app.crud import meal as crud
 from app.models.meal import Meal
 from app.models.ingredient import Ingredient
 from app.models.meal_ingredient import MealIngredient
-from fastapi.templating import Jinja2Templates
+
 
 router = APIRouter(prefix="/meals", tags=["meals"])
 

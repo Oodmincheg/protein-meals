@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from typing import Optional
 
 class MealIngredientBase(BaseModel):
     ingredient_id: int
