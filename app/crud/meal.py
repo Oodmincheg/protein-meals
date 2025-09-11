@@ -51,7 +51,7 @@ def get_all_meals(db: Session):
     return db.query(Meal).order_by(Meal.id).all()
 
 def create_meal(db: Session, meal: MealCreate):
-    db_meal = Meal(**meal.dict())
+    db_meal = Meal(**Ingredient.model_dump())
     db.add(db_meal)
     db.commit()
     db.refresh(db_meal)

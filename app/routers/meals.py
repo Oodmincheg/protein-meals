@@ -1,63 +1,122 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func
-from typing import List
 
 from app.database import get_db
-from app.crud.meal import get_meal_summaries
-from app.schemas.meal import MealSummary, MealCreate, MealUpdate, MealOut, MealWithIngredients
-from app.crud import meal as crud
 from app.models.meal import Meal
 from app.models.ingredient import Ingredient
 from app.models.meal_ingredient import MealIngredient
+from app.schemas.meal import MealCreate, MealUpdate, MealOut, MealSummary, MealWithIngredients
+
+router = APIRouter(prefix="/meals", tags=["Meals"])
 
 
-router = APIRouter(prefix="/meals", tags=["meals"])
-
-# JSON API endpoints
+# --------- Summary (for your summary table endpoint) ---------
 @router.get("/summary", response_model=List[MealSummary])
-def read_meal_summaries(db: Session = Depends(get_db)):
-    results = get_meal_summaries(db)
-    return [dict(row._mapping) for row in results]
+def meals_summary(db: Session = Depends(get_db)):
+    return db.query(Meal).all()
 
-@router.get("/filter-by-ingredient", response_model=List[MealWithIngredients])
-def filter_meals_by_ingredient(ingredient_name: str, db: Session = Depends(get_db)):
-    meals = (
+# --------- Filter by ingredient ---------
+@router.get("/filter-by-ingredient", response_model=List[MealOut])
+def meals_by_ingredient(
+    ingredient_id: Optional[int] = Query(None, gt=0),
+    ingredient_name: Optional[str] = Query(None, min_length=1),
+    db: Session = Depends(get_db),
+):
+    if ingredient_id is None and ingredient_name is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide ingredient_id or ingredient_name."
+        )
+
+    q = (
         db.query(Meal)
-        .join(Meal.ingredient_links)
-        .join(MealIngredient.ingredient)
-        .filter(func.lower(Ingredient.name).like(f"%{ingredient_name.lower()}%"))
-        .options(joinedload(Meal.ingredient_links).joinedload(MealIngredient.ingredient))
-        .distinct()
-        .all()
+        .join(MealIngredient, Meal.id == MealIngredient.meal_id)
+        .join(Ingredient, Ingredient.id == MealIngredient.ingredient_id)
     )
+
+    if ingredient_id is not None:
+        q = q.filter(MealIngredient.ingredient_id == ingredient_id)
+
+    if ingredient_name is not None:
+        ilike = f"%{ingredient_name.strip().lower()}%"
+        q = q.filter(func.lower(Ingredient.name).like(ilike))  # portable ILIKE
+
+    return q.distinct(Meal.id).all()
+
+
+# --------- Create ---------
+@router.post("/", response_model=MealOut, status_code=status.HTTP_201_CREATED)
+def create_meal(payload: MealCreate, db: Session = Depends(get_db)):
+    meal = Meal(**payload.model_dump())
+    db.add(meal)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        # unique name conflict
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Meal with this name already exists")
+    db.refresh(meal)
+    return meal
+
+# --------- Read (list) ---------
+@router.get("/", response_model=List[MealOut])
+def list_meals(db: Session = Depends(get_db)):
+    meals = db.query(Meal).all()
     return meals
 
-@router.post("/", response_model=MealOut)
-def create_meal(meal: MealCreate, db: Session = Depends(get_db)):
-    return crud.create_meal(db, meal)
-
-@router.get("/", response_model=List[MealOut])
-def read_all_meals(db: Session = Depends(get_db)):
-    return crud.get_all_meals(db)
-
+# --------- Read (by id) ---------
 @router.get("/{meal_id}", response_model=MealOut)
-def read_meal(meal_id: int, db: Session = Depends(get_db)):
-    result = crud.get_meal(db, meal_id)
-    if not result:
-        raise HTTPException(status_code=404, detail="Meal not found")
-    return result
+def get_meal(meal_id: int, db: Session = Depends(get_db)):
+    meal = db.query(Meal).get(meal_id)
+    if not meal:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meal not found")
+    return meal
 
+# --------- Update (partial) ---------
 @router.put("/{meal_id}", response_model=MealOut)
-def update_meal(meal_id: int, meal: MealUpdate, db: Session = Depends(get_db)):
-    result = crud.update_meal(db, meal_id, meal)
-    if not result:
-        raise HTTPException(status_code=404, detail="Meal not found")
-    return result
+def update_meal(meal_id: int, payload: MealUpdate, db: Session = Depends(get_db)):
+    meal = db.query(Meal).get(meal_id)
+    if not meal:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meal not found")
 
-@router.delete("/{meal_id}", response_model=MealOut)
+    # Only apply provided fields
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(meal, k, v)
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Meal with this name already exists")
+    db.refresh(meal)
+    return meal
+
+# --------- Delete ---------
+@router.delete("/{meal_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_meal(meal_id: int, db: Session = Depends(get_db)):
-    result = crud.delete_meal(db, meal_id)
-    if not result:
-        raise HTTPException(status_code=404, detail="Meal not found")
-    return result
+    meal = db.query(Meal).get(meal_id)
+    if not meal:
+        # DELETE can be idempotent; 404 is also acceptable — pick one policy.
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meal not found")
+    db.delete(meal)
+    db.commit()
+    return None
+
+# --------- Fetch meal with resolved ingredients (if you need it in UI) ---------
+@router.get("/{meal_id}/with-ingredients", response_model=MealWithIngredients)
+def get_meal_with_ingredients(meal_id: int, db: Session = Depends(get_db)):
+    meal = (
+        db.query(Meal)
+        .options(
+            joinedload(Meal.ingredient_links).joinedload(MealIngredient.ingredient)
+        )
+        .get(meal_id)
+    )
+    if not meal:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meal not found")
+    # MealWithIngredients.ingredients expects IngredientOut items; thanks to from_attributes, returning `meal` works.
+    return meal

@@ -6,7 +6,6 @@ from app.database import get_db
 from app.schemas.ingredient import IngredientCreate, IngredientUpdate, IngredientOut
 from app.crud import ingredient as crud
 
-from app.models import ingredient
 from app.models.ingredient import Ingredient
 
 router = APIRouter(prefix="/ingredients", tags=["ingredients"])
