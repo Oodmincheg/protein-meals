@@ -1,10 +1,11 @@
 # app/crud/meal_ingredient.py
 from sqlalchemy.orm import Session
+from app.models import ingredient
 from app.models.meal_ingredient import MealIngredient
 from app.schemas.meal_ingredient import MealIngredientCreate, MealIngredientUpdate
 
 def create_meal_ingredient(db: Session, data: MealIngredientCreate):
-    meal_ingredient = MealIngredient(**data.dict())
+    meal_ingredient = MealIngredient(**ingredient.model_dump())
     db.add(meal_ingredient)
     db.commit()
     db.refresh(meal_ingredient)

@@ -1,50 +1,54 @@
-from pydantic import BaseModel
+# app/schemas/meal.py
 from typing import Optional, List
+from pydantic import BaseModel, Field, ConfigDict
 
+# If IngredientOut lives in app/schemas/ingredient.py, import it:
 from app.schemas.ingredient import IngredientOut
 
-class MealSummary(BaseModel):
-    id: int
-    name: str
-    ingredients: str
-    total_calories: float
-    total_protein: float
-    total_fat: float
-    total_carbs: float
 
 class MealBase(BaseModel):
-    name: str
+    name: str = Field(min_length=1)
+    calories: float
+    protein: float
+    fat: float
+    carbs: float
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class MealCreate(MealBase):
-    calories: float
-    protein: float
-    fat: float
-    carbs: float
+    pass
 
 
-class MealUpdate(MealBase):
-    calories: float
-    protein: float
-    fat: float
-    carbs: float
+class MealUpdate(BaseModel):
+    name: Optional[str] = None
+    calories: Optional[float] = None
+    protein: Optional[float] = None
+    fat: Optional[float] = None
+    carbs: Optional[float] = None
+
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
 
 
 class MealOut(MealBase):
     id: int
+
+
+class MealSummary(BaseModel):
+    """Row for meals summary table."""
+    id: int
     name: str
     calories: float
     protein: float
     fat: float
     carbs: float
-    allergens: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
-class MealWithIngredients(BaseModel):
-    id: int
-    name: str
-    ingredients: List[IngredientOut]
 
-    class Config:
-        from_attributes = True
+class MealWithIngredients(MealOut):
+    """Meal + resolved ingredients list."""
+    # Your Meal model defines @property ingredients -> [Ingredient] via relationship
+    ingredients: List[IngredientOut] = []
+
+    model_config = ConfigDict(from_attributes=True)
